@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toggleFavorite, getRandomQuote } from "@/app/actions/actions";
+import { UserButton } from "@clerk/nextjs";
 
 type Quote = {
   id: number;
@@ -19,7 +20,7 @@ export default function VintageQuotePage({
   userId,
   initialFavorites,
 }: {
-  userId: string;
+  userId: string | null;
   initialFavorites: Quote[];
 }) {
   const [currentQuote, setCurrentQuote] = useState<Quote | null>(null);
@@ -36,9 +37,10 @@ export default function VintageQuotePage({
     try {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      const randomQuote = await getRandomQuote(userId);
+      const randomQuote = await getRandomQuote();
       setCurrentQuote(randomQuote);
     } catch (error) {
+      console.error("Error fetching random quote:", error);
     } finally {
       setIsLoading(false);
     }
@@ -57,8 +59,9 @@ export default function VintageQuotePage({
 
     startTransition(async () => {
       try {
-        await toggleFavorite(userId, quoteId);
+        await toggleFavorite(quoteId);
       } catch (error) {
+        // Revert the optimistic update on error
         setFavorites((prev) => {
           const isCurrentlyFavorite = prev.some((fav) => fav.id === quoteId);
           if (isCurrentlyFavorite) {
@@ -74,30 +77,16 @@ export default function VintageQuotePage({
   const isFavorite = (quote: Quote) =>
     favorites.some((fav) => fav.id === quote.id);
 
-  const switchUser = (newUserId: string) => {
-    window.location.href = `/?user=${newUserId}`;
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <div className="flex flex-col items-center justify-center min-h-screen p-8 max-w-4xl mx-auto">
-        {/* User Selector */}
-        <div className="absolute top-6 left-6">
-          <select
-            value={userId}
-            onChange={(e) => switchUser(e.target.value)}
-            className="px-3 py-2 border rounded-lg bg-background text-foreground text-sm"
-          >
-            <option value="demo-user">Demo User</option>
-            <option value="alice">Alice</option>
-            <option value="bob">Bob</option>
-            <option value="charlie">Charlie</option>
-            <option value="diana">Diana</option>
-          </select>
+        {/* User Button */}
+        <div className="absolute top-6 right-6">
+          <UserButton afterSignOutUrl="/" />
         </div>
 
         {/* Theme Toggle */}
-        <div className="absolute top-6 right-6">
+        <div className="absolute top-6 right-20">
           <Button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             variant="ghost"
@@ -115,7 +104,9 @@ export default function VintageQuotePage({
           <h1 className="text-4xl font-sans font-light mb-2 tracking-tight text-foreground">
             Quotes
           </h1>
-          <p className="font-light text-muted-foreground">Welcome, {userId}</p>
+          <p className="font-light text-muted-foreground">
+            Discover timeless wisdom
+          </p>
         </div>
 
         {/* Navigation */}
