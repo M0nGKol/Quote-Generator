@@ -59,7 +59,6 @@ export default function VintageQuotePage({
       try {
         await toggleFavorite(userId, quoteId);
       } catch (error) {
-        // Revert the optimistic update on error
         setFavorites((prev) => {
           const isCurrentlyFavorite = prev.some((fav) => fav.id === quoteId);
           if (isCurrentlyFavorite) {
@@ -75,9 +74,28 @@ export default function VintageQuotePage({
   const isFavorite = (quote: Quote) =>
     favorites.some((fav) => fav.id === quote.id);
 
+  const switchUser = (newUserId: string) => {
+    window.location.href = `/?user=${newUserId}`;
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <div className="flex flex-col items-center justify-center min-h-screen p-8 max-w-4xl mx-auto">
+        {/* User Selector */}
+        <div className="absolute top-6 left-6">
+          <select
+            value={userId}
+            onChange={(e) => switchUser(e.target.value)}
+            className="px-3 py-2 border rounded-lg bg-background text-foreground text-sm"
+          >
+            <option value="demo-user">Demo User</option>
+            <option value="alice">Alice</option>
+            <option value="bob">Bob</option>
+            <option value="charlie">Charlie</option>
+            <option value="diana">Diana</option>
+          </select>
+        </div>
+
         {/* Theme Toggle */}
         <div className="absolute top-6 right-6">
           <Button
@@ -97,9 +115,7 @@ export default function VintageQuotePage({
           <h1 className="text-4xl font-sans font-light mb-2 tracking-tight text-foreground">
             Quotes
           </h1>
-          <p className="font-light text-muted-foreground">
-            Discover timeless wisdom
-          </p>
+          <p className="font-light text-muted-foreground">Welcome, {userId}</p>
         </div>
 
         {/* Navigation */}
