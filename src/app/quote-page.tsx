@@ -49,7 +49,6 @@ export default function VintageQuotePage({
 
   const handleToggleFavorite = (quote: Quote) => {
     if (!isAuthenticated) {
-      // Show sign-in modal if not authenticated
       return;
     }
 
@@ -67,7 +66,6 @@ export default function VintageQuotePage({
       try {
         await toggleFavorite(quoteId);
       } catch (error) {
-        // Revert the optimistic update on error
         setFavorites((prev) => {
           const isCurrentlyFavorite = prev.some((fav) => fav.id === quoteId);
           if (isCurrentlyFavorite) {
@@ -86,12 +84,9 @@ export default function VintageQuotePage({
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <div className="flex flex-col items-center justify-center min-h-screen p-8 max-w-4xl mx-auto">
-        {/* Top Right Controls */}
         <div className="absolute top-6 right-6 flex items-center gap-3">
-          {/* Theme Toggle */}
           <ModeToggle />
 
-          {/* User Button / Sign In */}
           {isAuthenticated ? (
             <UserButton afterSignOutUrl="/" />
           ) : (

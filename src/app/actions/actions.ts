@@ -17,7 +17,6 @@ export async function isAuthenticated() {
   }
 }
 
-// Sync user with database
 export async function syncUser() {
   try {
     const { userId } = await auth();
@@ -72,7 +71,6 @@ export async function getRandomQuote() {
 
     const quote = randomQuote[0];
 
-    // Only check favorites if user is authenticated
     if (userId) {
       const isFav = await db
         .select()
@@ -85,8 +83,6 @@ export async function getRandomQuote() {
         isFavorite: isFav.length > 0,
       };
     }
-
-    // For anonymous users, return quote without favorite status
     return {
       ...quote,
       isFavorite: false,
@@ -119,7 +115,7 @@ export async function getUserFavorites() {
   }
 }
 
-// Toggle favorite (requires authentication)
+// Toggle favorite
 export async function toggleFavorite(quoteId: number) {
   try {
     const { userId } = await auth();
