@@ -6,6 +6,17 @@ import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { auth, currentUser } from '@clerk/nextjs/server';
 
+// Check if user is authenticated
+export async function isAuthenticated() {
+  try {
+    const { userId } = await auth();
+    return !!userId;
+  } catch (error) {
+    console.error("Error checking authentication:", error);
+    return false;
+  }
+}
+
 // Sync user with database
 export async function syncUser() {
   try {
@@ -44,31 +55,11 @@ export async function syncUser() {
   }
 }
 
-// Fetch all quotes (can be filtered by favorites if needed)
-export async function getAllQuotes() {
-  const { userId } = await auth();
-  if (!userId) return [];
-
-  const allQuotes = await db.select().from(quotes);
-
-  // Get user's favorite quote IDs
-  const favs = await db.select({ quoteId: favorites.quoteId })
-    .from(favorites)
-    .where(eq(favorites.userId, userId));
-  const favIds = favs.map(f => f.quoteId);
-
-  return allQuotes.map(q => ({
-    ...q,
-    isFavorite: favIds.includes(q.id),
-  }));
-}
-
-// Fetch a random quote from the database
+// Fetch a random quote from the database (works for anonymous users)
 export async function getRandomQuote() {
   try {
     const { userId } = await auth();
-    if (!userId) return null;
-
+    
     const randomQuote = await db
       .select()
       .from(quotes)
@@ -81,39 +72,54 @@ export async function getRandomQuote() {
 
     const quote = randomQuote[0];
 
-    const isFav = await db
-      .select()
-      .from(favorites)
-      .where(and(eq(favorites.userId, userId), eq(favorites.quoteId, quote.id)))
-      .limit(1);
+    // Only check favorites if user is authenticated
+    if (userId) {
+      const isFav = await db
+        .select()
+        .from(favorites)
+        .where(and(eq(favorites.userId, userId), eq(favorites.quoteId, quote.id)))
+        .limit(1);
 
+      return {
+        ...quote,
+        isFavorite: isFav.length > 0,
+      };
+    }
+
+    // For anonymous users, return quote without favorite status
     return {
       ...quote,
-      isFavorite: isFav.length > 0,
+      isFavorite: false,
     };
   } catch (error) {
+    console.error("Error fetching random quote:", error);
     throw error;
   }
 }
 
-// Get only the user's favorite quotes
+// Get only the user's favorite quotes (requires authentication)
 export async function getUserFavorites() {
-  const { userId } = await auth();
-  if (!userId) return [];
+  try {
+    const { userId } = await auth();
+    if (!userId) return [];
 
-  const userFavorites = await db.select({
-    id: quotes.id,
-    text: quotes.text,
-    author: quotes.author,
-  })
-    .from(favorites)
-    .innerJoin(quotes, eq(favorites.quoteId, quotes.id))
-    .where(eq(favorites.userId, userId));
+    const userFavorites = await db.select({
+      id: quotes.id,
+      text: quotes.text,
+      author: quotes.author,
+    })
+      .from(favorites)
+      .innerJoin(quotes, eq(favorites.quoteId, quotes.id))
+      .where(eq(favorites.userId, userId));
 
-  return userFavorites;
+    return userFavorites;
+  } catch (error) {
+    console.error("Error fetching user favorites:", error);
+    return [];
+  }
 }
 
-// Toggle favorite
+// Toggle favorite (requires authentication)
 export async function toggleFavorite(quoteId: number) {
   try {
     const { userId } = await auth();
@@ -132,13 +138,7 @@ export async function toggleFavorite(quoteId: number) {
 
     revalidatePath("/");
   } catch (error) {
-    throw error;
-  }
-}
-export async function updateDarkMode(userId: string, darkMode: boolean) {
-  try {
-    revalidatePath("/");
-  } catch (error) {
+    console.error("Error toggling favorite:", error);
     throw error;
   }
 }

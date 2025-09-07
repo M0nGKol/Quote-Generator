@@ -4,10 +4,10 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Heart } from "lucide-react";
 import { toggleFavorite, getRandomQuote } from "@/app/actions/actions";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, SignInButton } from "@clerk/nextjs";
+import { ModeToggle } from "@/components/ModeToggle";
 
 type Quote = {
   id: number;
@@ -19,9 +19,11 @@ type Quote = {
 export default function VintageQuotePage({
   userId,
   initialFavorites,
+  isAuthenticated,
 }: {
   userId: string | null;
   initialFavorites: Quote[];
+  isAuthenticated: boolean;
 }) {
   const [currentQuote, setCurrentQuote] = useState<Quote | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +32,6 @@ export default function VintageQuotePage({
     "discover"
   );
   const [isPending, startTransition] = useTransition();
-  const { theme, setTheme } = useTheme();
 
   const fetchRandomQuote = async () => {
     setIsLoading(true);
@@ -47,6 +48,11 @@ export default function VintageQuotePage({
   };
 
   const handleToggleFavorite = (quote: Quote) => {
+    if (!isAuthenticated) {
+      // Show sign-in modal if not authenticated
+      return;
+    }
+
     const quoteId = quote.id;
     setFavorites((prev) => {
       const isCurrentlyFavorite = prev.some((fav) => fav.id === quoteId);
@@ -80,23 +86,21 @@ export default function VintageQuotePage({
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <div className="flex flex-col items-center justify-center min-h-screen p-8 max-w-4xl mx-auto">
-        {/* User Button */}
-        <div className="absolute top-6 right-6">
-          <UserButton afterSignOutUrl="/" />
-        </div>
+        {/* Top Right Controls */}
+        <div className="absolute top-6 right-6 flex items-center gap-3">
+          {/* Theme Toggle */}
+          <ModeToggle />
 
-        {/* Theme Toggle */}
-        <div className="absolute top-6 right-20">
-          <Button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            variant="ghost"
-            size="icon"
-            className="rounded-full transition-colors duration-200 hover:bg-accent"
-          >
-            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
+          {/* User Button / Sign In */}
+          {isAuthenticated ? (
+            <UserButton afterSignOutUrl="/" />
+          ) : (
+            <SignInButton mode="modal">
+              <Button variant="outline" size="sm">
+                Sign In
+              </Button>
+            </SignInButton>
+          )}
         </div>
 
         {/* Header */}
@@ -105,7 +109,9 @@ export default function VintageQuotePage({
             Quotes
           </h1>
           <p className="font-light text-muted-foreground">
-            Discover timeless wisdom
+            {isAuthenticated
+              ? "Discover timeless wisdom"
+              : "Sign in to save your favorites"}
           </p>
         </div>
 
@@ -118,19 +124,21 @@ export default function VintageQuotePage({
           >
             Discover
           </Button>
-          <Button
-            onClick={() => setViewMode("favorites")}
-            variant={viewMode === "favorites" ? "default" : "ghost"}
-            className="font-light px-6 py-2 rounded-full transition-all duration-200"
-          >
-            <Heart className="w-4 h-4 mr-2" />
-            Favorites
-            {favorites.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {favorites.length}
-              </Badge>
-            )}
-          </Button>
+          {isAuthenticated && (
+            <Button
+              onClick={() => setViewMode("favorites")}
+              variant={viewMode === "favorites" ? "default" : "ghost"}
+              className="font-light px-6 py-2 rounded-full transition-all duration-200"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Favorites
+              {favorites.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {favorites.length}
+                </Badge>
+              )}
+            </Button>
+          )}
         </div>
 
         {/* Content */}
@@ -140,20 +148,32 @@ export default function VintageQuotePage({
               {currentQuote ? (
                 <Card className="relative bg-card border-border shadow-sm hover:shadow-md transition-all duration-200">
                   <CardContent className="p-8">
-                    <Button
-                      onClick={() => handleToggleFavorite(currentQuote)}
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-4 right-4 rounded-full hover:bg-accent"
-                    >
-                      <Heart
-                        className={`w-5 h-5 ${
-                          isFavorite(currentQuote)
-                            ? "text-amber-500 fill-amber-500"
-                            : "text-muted-foreground hover:text-amber-500"
-                        }`}
-                      />
-                    </Button>
+                    {isAuthenticated ? (
+                      <Button
+                        onClick={() => handleToggleFavorite(currentQuote)}
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-4 right-4 rounded-full hover:bg-accent"
+                      >
+                        <Heart
+                          className={`w-5 h-5 ${
+                            isFavorite(currentQuote)
+                              ? "text-amber-500 fill-amber-500"
+                              : "text-muted-foreground hover:text-amber-500"
+                          }`}
+                        />
+                      </Button>
+                    ) : (
+                      <SignInButton mode="modal">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-4 right-4 rounded-full hover:bg-accent"
+                        >
+                          <Heart className="w-5 h-5 text-muted-foreground hover:text-amber-500" />
+                        </Button>
+                      </SignInButton>
+                    )}
 
                     <div className="text-center">
                       <blockquote className="text-xl md:text-2xl font-light leading-relaxed mb-6 text-balance text-card-foreground">
