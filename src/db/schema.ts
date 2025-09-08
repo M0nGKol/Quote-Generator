@@ -18,9 +18,3 @@ export const favorites = pgTable("favorites", {
   userId: varchar("user_id", { length: 255 }).notNull(),
   quoteId: integer("quote_id").notNull(),
 });
-
-export const preferences = pgTable("preferences", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id", { length: 255 }).notNull().unique(),
-  darkMode: boolean("dark_mode").notNull().default(false),
-});
