@@ -45,7 +45,6 @@ export default function VintageQuotePage({
     if (!isAuthenticated) {
       return;
     }
-
     const quoteId = quote.id;
     setFavorites((prev) => {
       const isCurrentlyFavorite = prev.some((fav) => fav.id === quoteId);
@@ -94,7 +93,7 @@ export default function VintageQuotePage({
 
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-sans font-bold mb-2 tracking-tight text-foreground">
+          <h1 className="text-4xl font-sans font-bold mb-2 text-foreground">
             PeakSlork
           </h1>
           <p className="font-light text-muted-foreground">
