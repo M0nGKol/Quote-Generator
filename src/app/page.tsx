@@ -2,28 +2,13 @@ import {
   getUserFavorites,
   syncUser,
   isAuthenticated,
-  toggleFavorite,
 } from "@/app/actions/actions";
 import VintageQuotePage from "../components/quote-page";
-import { redirect } from "next/navigation";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: { fav?: string };
-}) {
+export default async function Page() {
   try {
     const isAuth = await isAuthenticated();
     const userId = isAuth ? await syncUser() : null;
-
-    if (isAuth && searchParams?.fav) {
-      const quoteId = Number(searchParams.fav);
-      if (!Number.isNaN(quoteId)) {
-        await toggleFavorite(quoteId);
-        redirect("/");
-      }
-    }
-
     const userFavorites = isAuth ? await getUserFavorites() : [];
 
     return (
