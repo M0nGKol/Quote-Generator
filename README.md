@@ -94,7 +94,7 @@ npm run format
 - Database
 
   - Drizzle ORM with PostgreSQL (`src/db/schema.ts`, `src/db/index.ts`).
-  - Tables: `users`, `quotes`, `favorites`, `preferences`.
+  - Tables: `users`, `quotes`, `favorites`.
   - Migrations live in `./drizzle` and are applied via `drizzle-kit migrate`.
   - Optional seeding via `scripts/seed.ts`.
 
