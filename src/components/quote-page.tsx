@@ -13,11 +13,9 @@ type Quote = {
   id: number;
   text: string;
   author: string;
-  isFavorite?: boolean;
 };
 
 export default function VintageQuotePage({
-  userId,
   initialFavorites,
   isAuthenticated,
 }: {
@@ -31,17 +29,13 @@ export default function VintageQuotePage({
   const [viewMode, setViewMode] = useState<"discover" | "favorites">(
     "discover"
   );
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const fetchRandomQuote = async () => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
       const randomQuote = await getRandomQuote();
       setCurrentQuote(randomQuote);
-    } catch (error) {
-      console.error("Error fetching random quote:", error);
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +52,7 @@ export default function VintageQuotePage({
       if (isCurrentlyFavorite) {
         return prev.filter((fav) => fav.id !== quoteId);
       } else {
-        return [...prev, { ...quote, isFavorite: true }];
+        return [...prev, quote];
       }
     });
 
@@ -69,7 +63,7 @@ export default function VintageQuotePage({
         setFavorites((prev) => {
           const isCurrentlyFavorite = prev.some((fav) => fav.id === quoteId);
           if (isCurrentlyFavorite) {
-            return [...prev, { ...quote, isFavorite: true }];
+            return [...prev, quote];
           } else {
             return prev.filter((fav) => fav.id !== quoteId);
           }
@@ -82,7 +76,7 @@ export default function VintageQuotePage({
     favorites.some((fav) => fav.id === quote.id);
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+    <div className="bg-background text-foreground">
       <div className="flex flex-col items-center justify-center min-h-screen p-8 max-w-4xl mx-auto">
         <div className="absolute top-6 right-6 flex items-center gap-3">
           <ModeToggle />
@@ -100,13 +94,11 @@ export default function VintageQuotePage({
 
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-sans font-light mb-2 tracking-tight text-foreground">
-            Quotes
+          <h1 className="text-4xl font-sans font-bold mb-2 tracking-tight text-foreground">
+            PeakSlork
           </h1>
           <p className="font-light text-muted-foreground">
-            {isAuthenticated
-              ? "Discover timeless wisdom"
-              : "Sign in to save your favorites"}
+            Discover timeless wisdom
           </p>
         </div>
 
@@ -128,7 +120,7 @@ export default function VintageQuotePage({
               <Heart className="w-4 h-4 mr-2" />
               Favorites
               {favorites.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
+                <Badge variant="secondary" className="ml-2 bg-chart-2">
                   {favorites.length}
                 </Badge>
               )}
@@ -153,8 +145,8 @@ export default function VintageQuotePage({
                         <Heart
                           className={`w-5 h-5 ${
                             isFavorite(currentQuote)
-                              ? "text-amber-500 fill-amber-500"
-                              : "text-muted-foreground hover:text-amber-500"
+                              ? "text-primary fill-primary"
+                              : "text-muted-foreground hover:text-primary"
                           }`}
                         />
                       </Button>
@@ -165,7 +157,7 @@ export default function VintageQuotePage({
                           size="icon"
                           className="absolute top-4 right-4 rounded-full hover:bg-accent"
                         >
-                          <Heart className="w-5 h-5 text-muted-foreground hover:text-amber-500" />
+                          <Heart className="w-5 h-5 text-muted-foreground hover:text-primary" />
                         </Button>
                       </SignInButton>
                     )}
@@ -194,15 +186,15 @@ export default function VintageQuotePage({
             <Button
               onClick={fetchRandomQuote}
               disabled={isLoading}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-light text-base px-8 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-light text-base px-8 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
                   <span>Loading...</span>
                 </div>
               ) : (
-                "New Quote"
+                "New quote"
               )}
             </Button>
           </>
@@ -213,7 +205,7 @@ export default function VintageQuotePage({
                 {favorites.map((quote) => (
                   <Card
                     key={quote.id}
-                    className="relative bg-card border-border shadow-sm hover:shadow-md transition-all duration-200"
+                    className="relative border-border border-dashed bg-card transition-all duration-200"
                   >
                     <CardContent className="p-6">
                       <Button
@@ -222,7 +214,7 @@ export default function VintageQuotePage({
                         size="icon"
                         className="absolute top-3 right-3 rounded-full hover:bg-accent"
                       >
-                        <Heart className="w-4 h-4 text-amber-500 fill-amber-500" />
+                        <Heart className="w-4 h-4 text-primary fill-primary" />
                       </Button>
 
                       <div className="text-center">
@@ -244,7 +236,7 @@ export default function VintageQuotePage({
                     No favorites yet
                   </div>
                   <p className="font-light text-sm text-muted-foreground/80">
-                    Save quotes by clicking the heart icon
+                    Tap the heart on any quote
                   </p>
                 </CardContent>
               </Card>
